@@ -1,3 +1,22 @@
 *.exe
-/claude-account-switcher
 /dist/
+/claude-account-switcher
+/claude-account-workbench
+/.claude-account-switcher/
+/accounts/
+/backups/
+/ui-webview/
+state.json
+ui-settings.json
+spaces-seen.json
+Cookies
+Cookies-journal
+Local State
+*.log
+*.switcher-tmp
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx

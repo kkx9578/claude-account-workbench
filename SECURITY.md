@@ -1,22 +1,30 @@
-# Security
+# 安全报告
 
-The switcher handles Claude sign-in tokens, so security reports matter a lot here.
+Claude Account Workbench 会处理本机Claude登录快照和账号元数据。可能泄露凭证、错误关联账号、破坏登录数据或未经确认执行敏感操作的问题，请私密报告。
 
-## Reporting a problem
+## 私密提交
 
-Please **do not open a public issue.** Report it privately instead:
-[Report a vulnerability](https://github.com/SnlperStripes/claude-account-switcher/security/advisories/new).
+使用本仓库的 [Report a vulnerability](https://github.com/kkx9578/claude-account-workbench/security/advisories/new) 入口。不要在公开Issue、PR或讨论中披露可利用细节或附上真实凭证。
 
-Include what you found, how to reproduce it, and which version you tested. You should get an answer within a week.
+请提供工作台版本、Windows与Claude版本、最小复现步骤、可能影响和使用虚构数据制作的示例。可以附上经过检查的脱敏错误文本。我们优先处理当前最新公开版本的问题，不承诺固定响应时限。
 
-## What counts
+## 不要上传的内容
 
-Anything that could expose or misuse a saved sign-in, for example:
+- 密码、验证码、双重验证密钥、访问令牌或会话Cookie。
+- Claude原始配置、浏览器登录存储、`accounts/`或`backups/`中的登录快照。
+- 整个 `%USERPROFILE%\.claude-account-switcher` 目录。
+- 含真实邮箱、个人路径、会话正文或私有代码的未脱敏截图和日志。
 
-- Tokens or cookies written in plain text, logged, or sent anywhere other than `api.anthropic.com`
-- Other users or programs on the machine being able to read the saved sign-ins more easily than Claude's own files
-- A release binary that does not match its `.sha256` file or the source
+即使配置中的令牌仍处于加密状态，也应将配置和快照作为敏感数据保管。`state.json`与`ui-settings.json`还可能包含账号邮箱、资料绑定和活动信息。
 
-## Supported versions
+## 安全边界
 
-Only the latest release gets fixes.
+工作台沿用当前Windows用户下的Claude登录数据。读取授权后，身份和额度请求发送到Anthropic接口；版本检查访问GitHub。程序不会替用户完成官方登录或接收验证码。
+
+Chrome资料绑定用于选择浏览器个人资料；本地登录快照用于切换已保存账号。这些机制不提供独立操作系统、独立网络出口或抵御同一Windows用户下恶意程序的安全隔离。
+
+会重启Claude的操作需要事先保存并停止任务。运行中任务、普通云端聊天和跨设备数据同步不属于本工具的恢复保证。
+
+## 如果已经泄露
+
+先通过官方账号设置撤销受影响的会话或凭证，并移除公开附件。删除公开内容不代表已有副本失效。随后通过上述私密入口说明泄露类型和范围，无需再次发送秘密值。

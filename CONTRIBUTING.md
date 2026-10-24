@@ -1,53 +1,61 @@
-# Contributing
+# 参与开发
 
-Thanks for wanting to help. Bug reports, macOS test runs and pull requests are all welcome.
+欢迎提交可复现的问题、界面改进和小范围修复。项目仓库为 [kkx9578/claude-account-workbench](https://github.com/kkx9578/claude-account-workbench)，当前开发与验证目标是 Windows x64。
 
-## The most useful things right now
+## 提交问题
 
-- **Run it on a Mac.** The macOS build passes CI but has never run on a real Mac. Open a [macOS test report](https://github.com/SnlperStripes/claude-account-switcher/issues/new?template=macos_report.yml), even if everything worked.
-- **Report breakage after a Claude update.** The switcher depends on how Claude stores its files. When an update changes that, a bug report with the Claude version and a log excerpt is the fastest way to a fix.
+普通问题请在本仓库创建 Issue，提供：
 
-## Build and test
+- 工作台版本、Windows版本、Claude桌面版本及安装渠道。
+- 最小操作步骤、期望结果与实际结果。
+- 是否涉及账号切换、身份识别、额度刷新或聊天索引。
+- 必要的脱敏错误文本或截图。用 `example.com` 邮箱替代真实账号，遮盖个人目录与项目内容。
 
-Go 1.26 or newer.
+不要上传完整日志包、`state.json`、`ui-settings.json`、Claude原始配置、Cookie、登录快照或任何令牌。安全问题使用 [私密报告入口](https://github.com/kkx9578/claude-account-workbench/security/advisories/new)，参见 [SECURITY.md](SECURITY.md)。
 
-```bash
+## 开发与验证
+
+使用 Windows x64 和 Go 1.26.9。界面运行需要系统 WebView2 Runtime；普通单元测试不要求启动真实 Claude 或 Chrome。
+
+```powershell
 go vet ./...
-go test ./...
-go build -ldflags "-H=windowsgui -s -w" -o claude-account-switcher.exe .   # Windows
-CGO_ENABLED=1 go build -o claude-account-switcher .                        # macOS
+go test -count=1 ./...
+go build -tags production -trimpath -ldflags "-H=windowsgui -s -w" -o claude-account-workbench-windows-amd64.exe .
 ```
 
-Every pull request runs vet and tests on Windows and macOS.
+提交前对改动的 Go 文件运行 `gofmt`。修复行为错误时增加能够重现问题的回归测试；UI改动应检查正常、等待、失败、取消和小窗口状态。
 
-## Where things are
+## 代码入口
 
-| File | What it does |
+| 文件 | 主要职责 |
 | --- | --- |
-| `main.go` | Start-up, flags, log |
-| `tray.go` | The tray menu |
-| `switcher.go` | Accounts, `state.json`, the switch itself, auto-switch |
-| `profiles.go` | Saving and restoring a sign-in, backups |
-| `sessions.go` | Copying the Claude Code chat list between accounts |
-| `usage.go` | Profile and usage requests to `api.anthropic.com`, polling, backoff |
-| `update.go` | The daily check for a new release on GitHub |
-| `desktop.go` | Reading Claude's data folder: `config.json`, cookies, the active account |
-| `crypto_*.go` | Decrypting Claude's token cache (DPAPI, keychain) |
-| `platform_*.go` | Finding, quitting and starting Claude, start at login, OS specifics |
-| `icon.go` | The usage ring in the tray |
+| `main.go`、`ui_windows.go` | 启动、单实例、Wails窗口与托盘生命周期 |
+| `ui.go`、`frontend/` | 界面绑定、登录核对、Chrome绑定与交互 |
+| `chrome.go` | Chrome资料元数据发现及指定资料启动 |
+| `switcher.go` | 账号状态、定时检查、切换与持久化 |
+| `identity_refresh.go`、`usage.go` | 手动身份／额度刷新、API边界与授权读取 |
+| `profiles.go`、`desktop.go` | 登录快照、备份及本地配置操作 |
+| `sessions.go`、`spaces.go` | 本地Code会话索引与项目分组同步 |
+| `*_test.go` | 临时目录、虚构账号及HTTP边界回归测试 |
 
-## Ground rules
+## 涉及账号或文件操作的改动
 
-These keep the tool safe to run on someone's real sign-ins:
+保持以下行为，并用可复现测试验证相关改动：
 
-- **Tokens never leave the machine** except to `api.anthropic.com`. Never log them, never write them in plain text.
-- **Touch only what you must.** The switcher changes three `config.json` entries and the cookie file. Everything else in Claude's data stays as it is.
-- **Fail loudly, restore the backup.** If Claude's files do not look as expected, stop, put the backup back and show the error in the menu. Do not guess.
-- **No new dependencies** without talking about it in an issue first.
+- 身份与额度分别刷新；手动请求只作用于当前账号。
+- 真实429等待、并发保护和未完成检查标记不能被普通刷新或重启绕过。
+- 请求前保存失败不发送HTTP；结果保存失败不报告成功，也不覆盖原来的有效缓存。
+- 请求期间本地账号改变时，不把响应关联到错误账号。
+- 新的识别入口不得意外重启Claude；需要重启的操作须有明确提示与确认。
+- 原会话ID、正文和代码目录保持不变；仅在需要时同步索引与分组。
+- 密码、验证码、Cookie和令牌不得进入前端载荷、日志、截图或测试提交。
 
-## Pull requests
+账号流程测试请复用临时目录和内存HTTP transport。不要让默认测试访问个人登录文件、调用真实账号API、关闭Claude或启动真实浏览器。环境相关的只读探测需要明确跳过条件。
 
-- One change per pull request. Small is easier to review.
-- Say what you tested on: Windows Store app, Windows direct download, macOS.
-- Commit messages in plain English, imperative, like the existing history ("Poll usage less often and back off after 429").
-- By contributing you agree that your work is licensed under [Apache 2.0](LICENSE), like the rest of the project.
+## Pull Request
+
+一次PR聚焦一个问题，说明触发条件、修改后的行为、验证命令与尚未验证的环境。对新增依赖说明用途、维护情况、许可证和集成成本，并更新相应许可证材料。
+
+保留上游版权和来源说明。项目基于上游 v0.3.1；引入后续上游修复时，注明来源提交及已验证的兼容范围，不把部分移植描述成整体升级。
+
+本仓库使用 Apache-2.0。提交的改动应与该许可证兼容，详见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。

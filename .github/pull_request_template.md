@@ -1,10 +1,7 @@
-## What and why
+## What changed
 
-<!-- What does this change, and what problem does it solve? Link the issue if there is one. -->
+Describe the problem and resulting behavior.
 
-## Tested on
+## Validation
 
-- [ ] Windows, Microsoft Store Claude
-- [ ] Windows, direct download Claude
-- [ ] macOS
-- [ ] `go vet ./...` and `go test ./...` pass
+State the checks performed. Use synthetic accounts and avoid exposing sign-in data.

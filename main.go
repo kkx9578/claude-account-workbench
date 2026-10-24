@@ -1,10 +1,10 @@
 // Command claude-account-switcher is a tray tool for the Claude desktop app.
 // It switches the app between signed-in accounts without signing in again,
 // keeps Claude Code chats visible in every account and shows plan usage.
+// Modified 2026-10-19: Chinese UI, Chrome bindings and startup error display.
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -13,17 +13,15 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"fyne.io/systray"
 )
 
-const version = "0.3.1"
+const version = "0.1.0"
 
-// Only one switcher may run; a second start exits quietly.
+// Only one switcher may run; a second start explains how to open the tray UI.
 const instancePort = "127.0.0.1:47823"
 
 func main() {
-	status := flag.Bool("status", false, "print accounts and usage, then exit")
+	status := flag.Bool("status", false, "只读输出本地缓存的账号和用量后退出")
 	flag.Parse()
 
 	// The home folder, because the Store app redirects AppData for everything
@@ -49,14 +47,16 @@ func main() {
 
 	lock, err := net.Listen("tcp", instancePort)
 	if err != nil {
-		log.Print("already running")
+		showStartupError("账号切换器已经在运行。请从托盘打开工作台；若仍是旧版，请先退出旧版再运行新版。")
 		return
 	}
 	defer lock.Close()
 
 	log.Printf("claude-account-switcher %s, app data in %s", version, claudeDesktop().dir)
-	t := &tray{s: newSwitcher(dir), updates: make(chan struct{}, 1)}
-	systray.Run(t.onReady, func() {})
+	if err := runDesktopUI(newSwitcher(dir)); err != nil {
+		log.Print(err)
+		showStartupError(err.Error())
+	}
 }
 
 // setupLog writes to switcher.log and starts it over once it passes 1 MB.
@@ -77,14 +77,12 @@ func setupLog(path string, console bool) {
 	}
 }
 
-// printStatus refreshes once and prints what the menu would show.
+// printStatus only reads local metadata and cached usage; it never polls or switches.
 func printStatus(s *switcher) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	s.refresh(ctx)
 	snap := s.snapshot()
+	snap.Active, _ = s.d.activeAccount()
 	if len(snap.Accounts) == 0 {
-		fmt.Println("no accounts yet, sign in to Claude")
+		fmt.Println("尚无账号，请先在 Claude 中登录")
 	}
 	for _, a := range snap.Accounts {
 		mark := " "

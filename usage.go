@@ -1,3 +1,4 @@
+// Modified 2026-10-19: Simplified Chinese user-facing text and date display.
 package main
 
 import (
@@ -87,18 +88,25 @@ func apiGet(ctx context.Context, token, path string, out any) error {
 	case http.StatusUnauthorized:
 		return errSignedOut
 	case http.StatusTooManyRequests:
-		wait, _ := strconv.Atoi(res.Header.Get("Retry-After"))
-		return &rateLimited{after: time.Duration(wait) * time.Second}
+		header := res.Header.Get("Retry-After")
+		wait := time.Duration(0)
+		if seconds, err := strconv.Atoi(header); err == nil && seconds > 0 {
+			wait = time.Duration(seconds) * time.Second
+		} else if date, err := http.ParseTime(header); err == nil {
+			wait = max(time.Until(date), 0)
+		}
+		return &rateLimited{after: wait}
 	}
 	return fmt.Errorf("%s: %s", path, res.Status)
 }
 
-var errSignedOut = errors.New("sign-in expired")
+var errSignedOut = errors.New("登录状态已过期")
+var errAuthNotReady = errors.New("尚未检测到 Claude Code 授权，请在桌面打开 Code 页面并完成首次授权；普通聊天登录仍可正常使用")
 
 // rateLimited is a 429. after is the server's Retry-After, zero when it gave none.
 type rateLimited struct{ after time.Duration }
 
-func (e *rateLimited) Error() string { return "rate limited" }
+func (e *rateLimited) Error() string { return "额度服务暂时限流，已暂停检查" }
 
 func fetchProfile(ctx context.Context, token string) (profile, error) {
 	var p profile
@@ -142,6 +150,10 @@ func accessToken(cacheValue, account string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return accessTokenFromJSON(plain, account)
+}
+
+func accessTokenFromJSON(plain []byte, account string) (string, error) {
 	var cache map[string]struct {
 		Token     string `json:"token"`
 		ExpiresAt int64  `json:"expiresAt"`
@@ -150,16 +162,23 @@ func accessToken(cacheValue, account string) (string, error) {
 		return "", err
 	}
 	best, bestExp := "", int64(0)
+	matched := false
 	now := time.Now().UnixMilli()
 	for k, v := range cache {
 		if !strings.HasPrefix(k, "acct:"+account+"|") || !strings.Contains(k, "user:profile") {
 			continue
+		}
+		if v.Token != "" {
+			matched = true
 		}
 		if v.ExpiresAt > now && v.ExpiresAt > bestExp {
 			best, bestExp = v.Token, v.ExpiresAt
 		}
 	}
 	if best == "" {
+		if !matched {
+			return "", errAuthNotReady
+		}
 		return "", errSignedOut
 	}
 	return best, nil

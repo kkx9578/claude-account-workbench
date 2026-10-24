@@ -3,3 +3,35 @@ Copyright 2026 SnlperStripes
 https://github.com/SnlperStripes/claude-account-switcher
 
 This product includes software developed by SnlperStripes.
+
+Local Simplified Chinese desktop UI edition, 2026-10-19.
+Modified from upstream v0.3.1: Chinese tray and status text; Wails desktop
+window with embedded frontend; Chrome profile discovery and unique account
+bindings; expected-email login confirmation; operation progress and restart
+failure handling; concurrency guards; pending-login automation pause; tests.
+The upstream account snapshot and local Code session synchronization are retained.
+This is a local modification, not an upstream official release.
+
+UI runtime: Wails v2.17.0 (MIT), https://github.com/wailsapp/wails
+Other dependency notices and licenses are included in THIRD_PARTY_LICENSES.
+
+Chinese UI edition 2 changes, 2026-10-19:
+Reduced account layout and progressive account management; three-step login
+flow with progress, errors and cancel access. Sparse quota polling, persisted
+cooldowns and in-flight markers, HTTP-date Retry-After support, concurrent
+refresh suppression and delayed-login session synchronization regression fixes.
+
+Chinese UI edition 2.1 changes, 2026-10-24:
+Explicit current-account identity refresh, separate from usage polling;
+distinct missing Code authorization state; persisted manual request spacing
+and actual rate-limit deadlines; confirmed deferred chat synchronization.
+
+Chinese UI edition 2.2, 2026-10-24: explicit current-account usage refresh;
+separate identity and usage request spacing; identity refresh no longer
+postpones the periodic usage schedule.
+
+Public derivative: Claude Account Workbench, maintained by kkx9578.
+https://github.com/kkx9578/claude-account-workbench
+First public release v0.1.0, derived from upstream v0.3.1 and the local
+Chinese UI edition 2.2. Public release metadata, Windows packaging, and
+documentation were adapted on 2026-10-24.

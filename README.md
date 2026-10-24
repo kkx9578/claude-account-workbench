@@ -1,261 +1,130 @@
-<div align="center">
+# Claude Account Workbench
 
-<img src="assets/banner.svg" width="880" alt="Claude Account Switcher: switch the Claude desktop app between accounts. No email code, your chats come along.">
+面向 Windows 的 Claude 桌面账号工作台：用中文界面管理已登录账号、查看用量、绑定 Chrome 个人资料，并在切换账号时保留本机 Code 聊天入口。
 
-[![Latest release](https://img.shields.io/github/v/release/SnlperStripes/claude-account-switcher)](https://github.com/SnlperStripes/claude-account-switcher/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/SnlperStripes/claude-account-switcher/total)](https://github.com/SnlperStripes/claude-account-switcher/releases)
-[![Tests](https://github.com/SnlperStripes/claude-account-switcher/actions/workflows/test.yml/badge.svg)](https://github.com/SnlperStripes/claude-account-switcher/actions/workflows/test.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-![Windows | macOS](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)
+[下载](https://github.com/kkx9578/claude-account-workbench/releases) · [English](README.en.md) · [更新记录](CHANGELOG.md) · [参与开发](CONTRIBUTING.md) · [安全报告](SECURITY.md)
 
-**Hit your limit on one Claude account, keep working on the next one. One click, no email code.**
+![账号列表、当前账号、额度和管理入口；截图中的邮箱均为 example.com 虚构数据](docs/screenshots/accounts-demo.png)
 
-A tray tool for the Claude desktop app. It swaps the signed-in account in about ten seconds,
-carries your Claude Code chats across, and shows the live usage of every account you own.
+*截图使用虚构账号，不包含真实登录信息。*
 
-**Your sign-ins never leave your machine.** Tokens stay encrypted exactly as Claude stored them,
-and the only server they ever go to is `api.anthropic.com`.
+## 支持范围
 
-[![Download for Windows](https://img.shields.io/badge/Download_for_Windows-.exe-2ea44f?style=for-the-badge)](https://github.com/SnlperStripes/claude-account-switcher/releases/latest/download/claude-account-switcher-windows-amd64.exe)
-[![Download for macOS](https://img.shields.io/badge/Download_for_macOS-universal-555555?style=for-the-badge)](https://github.com/SnlperStripes/claude-account-switcher/releases/latest/download/claude-account-switcher-macos)
+- **Windows x64**；已在 Windows 11 验证。当前不提供 macOS、Linux 或 Windows ARM 原生版本。
+- 已安装官方 **Claude 桌面客户端**。
+- 系统已安装 **Microsoft Edge WebView2 Runtime**，用于显示工作台界面。
+- 添加账号和绑定浏览器资料需要 **Google Chrome**。
+- Code 会话接续和相关授权需要账号具备 **Claude Code 使用权限**，例如支持该功能的 Pro 等套餐；具体资格以官方当前说明为准。普通聊天登录完成后，可能仍需在桌面客户端打开 Code 页面完成首次授权。
 
-Unofficial. Not affiliated with or endorsed by Anthropic.
+请使用你自己的账号，并自行在官方客户端和浏览器中完成登录。工作台不提供账号注册或代登录服务。
 
-</div>
+## 下载与启动
 
----
+1. 在 [Releases](https://github.com/kkx9578/claude-account-workbench/releases) 下载 Windows ZIP 并解压，或下载 `claude-account-workbench-windows-amd64.exe`。
+2. 如果正在使用旧版工作台或上游账号切换器，先从托盘退出旧管理器；Claude 中的账号可以保持登录。
+3. 运行 `claude-account-workbench-windows-amd64.exe`。如果系统缺少 WebView2 Runtime，请先安装微软官方运行时。
 
-## The problem
+关闭工作台窗口后，程序会留在托盘。右键托盘可重新打开窗口；完全退出请使用托盘中的退出命令。
 
-You have two Claude accounts because one runs out. Switching between them in the desktop app goes like this:
+更新时退出旧管理器、替换程序文件，再重新启动。账号数据位于独立的用户目录，见下文“本地数据”。
 
-1. **Sign out.** That throws the sign-in away. Next time you need it, you start from zero.
-2. **Sign in with the other address and wait for the email code.** With a private relay address, that means opening another app to find it.
-3. **Find your work.** Claude files Claude Code chats per account, so the chat you were in the middle of is gone from the sidebar. The conversation still exists on disk; the app just does not list it.
-4. **Guess** which account has room left, because usage only shows for the one you are signed in to.
+## 第一次使用
 
-Three of those four steps are pure overhead, and the fourth is a guess.
+1. 打开官方 Claude 桌面客户端，登录第一个账号。
+2. 如需使用 Code，在桌面客户端打开 Code 页面并完成授权。
+3. 回到工作台，点击 **重新识别账号**，读取当前邮箱和套餐。
+4. 点击 **刷新额度**，查询当前账号的5小时和每周用量。
+5. 在该账号的 **管理** 中选择 Chrome 个人资料，点击 **保存绑定**。
 
-## What it does instead
+账号身份和额度分别刷新。显示 Pro 等套餐不代表额度已经查询过；额度仍为“待检查”时，可以直接点击“刷新额度”。
 
-**Keeps every sign-in.** Each account's sign-in is saved when you switch away from it and put back when you switch to it. You type an email code once per account, ever, and not again until Anthropic ends that sign-in.
+## 添加另一个已有账号
 
-**Switches in one click.** Right-click the tray icon, pick an account. Claude quits, the sign-in is swapped, Claude starts again. Everything else in Claude's settings stays exactly as it was.
+1. 保存并停止 Claude 中正在执行的任务。若旧设置启用了自动切换，先在工作台改为手动模式。
+2. 为目标账号准备独立的 Chrome 个人资料，然后点击 **添加已有账号**。
+3. 填写目标 Claude 邮箱、选择对应 Chrome 资料，确认网络可用和任务已停止。管理器会先保存当前登录，再打开同一个 Claude 客户端的登录页，无需先手动注销。
+4. 在官方 Claude 和对应 Chrome 资料中完成登录与邮箱验证。密码、验证码和双重验证信息只填写在官方页面。
+5. 回到工作台，进入核对步骤，点击 **重新识别账号**。实际邮箱与目标邮箱一致后，点击 **确认并保存账号**。
+6. 若提示需要同步原聊天，先保存并停止任务，再确认同步。该步骤会重启 Claude。
 
-**Brings your chats along.** Before Claude starts, the switcher copies the chat list entries of your other accounts into the one you switch to. Open the chat you were in and keep going. Projects come along too, so chats stay grouped in them. Chats you deleted stay deleted.
+一份 Chrome 个人资料只能绑定一个账号。打开指定资料不会改变 Windows 默认浏览器；若登录链接落在其他窗口，请手动复制到对应资料中继续。
 
-**Shows usage for all accounts at once.** 5-hour and weekly usage for every saved account, live, with when each weekly limit resets and the 5-hour reset once that limit is close. The tray icon is a ring that fills with the active account's 5-hour usage: green, orange from 75%, red at your switch threshold.
+工作台使用已有网络环境。菜单中的“打开 easyAI”仅是为已经安装该工具的用户保留的可选入口；不要求使用 easyAI，也不检测网络出口或修改网络设置。
 
-**Can switch on its own.** Off by default. Turn it on and the switcher moves Claude to the account with the most room left once the active one passes 96% (or 90, 94, 98, your choice). A second toggle moves it to an account whose weekly limit is about to reset mostly unused, so that usage is not lost.
+## 日常切换与聊天接续
 
-## Measured
+保存并停止当前任务 → 点击目标账号的 **切换** → 确认重启 → 等待完成 → 在 Claude 中打开原来的 Code 聊天。
 
-The first real run, on Windows 11 with the Microsoft Store version of Claude, from the switcher's own log:
+切换流程保存当前账号的登录快照、恢复目标账号，并同步本机 Code 会话索引和项目分组。原有会话ID、本地会话正文和代码目录继续使用。也可以通过 **更多操作 → 同步聊天入口** 手动同步；该操作同样会重启 Claude。
 
-| Step | Time |
-| --- | --- |
-| Add a second account, including typing its email code | 44 s |
-| Detect the new sign-in, import the missing chats, restart Claude | 9 s |
-| Switch accounts, from the click until Claude starts again | 9 s |
-| Round trip of Claude's real `config.json` through the switcher | byte-identical |
+适用边界：
 
-## Install
+- 接续的是**同一台电脑上的 Code 会话入口**。普通云端聊天、Cowork 会话和正在运行的任务不属于接续保证范围。
+- 已保存的登录可能过期或被撤销，届时需要重新登录。
+- Chrome 资料绑定与登录快照分开管理，不等于独立 Windows 用户、虚拟机或独立公网IP，也不保证平台不会限制账号。
 
-Download the file for your platform and run it. No installer, no runtime, one file.
+首次使用建议先在测试项目中完成一次 A → B → A，确认账号、原聊天和代码目录符合预期，再用于正式工作。
 
-- **Windows 10/11:** [`claude-account-switcher-windows-amd64.exe`](https://github.com/SnlperStripes/claude-account-switcher/releases/latest/download/claude-account-switcher-windows-amd64.exe). Works with the Microsoft Store app and the direct download. Or install it with winget and start it with `claude-account-switcher`:
-  ```
-  winget install SnlperStripes.ClaudeAccountSwitcher
-  ```
-- **macOS:** [`claude-account-switcher-macos`](https://github.com/SnlperStripes/claude-account-switcher/releases/latest/download/claude-account-switcher-macos) (universal). The first start asks once whether it may read "Claude Safe Storage" from your keychain; that is the key Claude uses to encrypt its sign-in. Builds in CI, not yet tested on a real Mac. Reports welcome.
-- **Linux:** there is no official Claude desktop app, so there is nothing to switch.
+## 身份刷新、额度刷新与等待时间
 
-Then turn on **Start at login** in its menu.
-
-The builds are not code-signed, so the first start gets one warning:
-
-- **Windows:** SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
-- **macOS:** the download is not executable yet and Gatekeeper blocks it. Run this once in the folder you saved it to:
-  ```bash
-  chmod +x claude-account-switcher-macos && xattr -d com.apple.quarantine claude-account-switcher-macos
-  ```
-
-Every download has a `.sha256` file next to it, so you can check it is the file CI built.
-
-## First run
-
-1. Start the switcher while you are signed in to Claude. It picks up that account within a minute.
-2. Choose **Add account…**. Claude restarts on its sign-in screen. Your first account is kept.
-3. Sign in with the second account. The switcher notices, restarts Claude once more, and the chats of your other account show up.
-
-From then on, click an account to switch.
-
-> [!IMPORTANT]
-> **Never use Sign out in Claude to change accounts.** Signing out can end that sign-in on Anthropic's side, and the switcher's saved copy stops working. The account then shows "signed out, add it again". Use **Add account…** to sign it in once more.
-
-## Auto-switch
-
-Two toggles in the menu, both off until you turn them on:
-
-- **Auto-switch** moves Claude to the account with the most room left once the active one is nearly full.
-- **Auto-switch to use up expiring weekly** moves Claude to an account whose weekly limit resets soon with most of it unused, so that usage is not lost.
-
-A switch restarts Claude. A reply that is being written at that moment stops, and you continue it in the same chat on the other account.
-
-Anthropic's terms do not forbid having more than one account. They do forbid "bypassing any of our systems or protective measures". Whether automatic switching fits how you use your accounts is your call, which is why both toggles are off until you turn them on.
-
-<details>
-<summary><b>When Auto-switch acts</b></summary>
-
-&nbsp;
-
-All of these have to hold before the switcher acts:
-
-| Rule | Why |
-| --- | --- |
-| The active account is at or above the threshold, 5-hour or weekly | 96% by default, so the switch lands before a reply gets cut off at 100% |
-| Another account is at least 10 points below the threshold | No bouncing onto an account that is nearly full too |
-| The active account was checked in the last 5 minutes, the other one in the last 15 | No decisions on stale numbers |
-| The last switch was more than 10 minutes ago | No ping-pong |
-| Claude is running | It never starts Claude behind your back |
-
-</details>
-
-<details>
-<summary><b>When Auto-switch to use up expiring weekly acts</b></summary>
-
-&nbsp;
-
-Weekly usage you do not spend before the reset is gone. With this on, the switcher moves Claude to another account when all of these hold:
-
-| Rule | Why |
-| --- | --- |
-| The other account's weekly limit resets within 24 hours | That is the usage about to be lost |
-| It has used 50% of its week or less | Worth a restart only when a good part is left |
-| It is at least 10 points below the threshold, 5-hour included | It can actually take work right now |
-| The active account is not in the same spot itself, resetting within 24 hours at 50% or less | Its own unused week counts just as much |
-| You did not switch by hand in the last 5 hours | Your own pick wins |
-| No Claude Code chat was active in the last 15 minutes | This switch is never urgent, so it waits instead of cutting off a reply |
-
-The freshness, cooldown and "Claude is running" rules above apply too. When several accounts qualify, the one that resets first wins. With both toggles on, being nearly full comes first: the account with the most room wins over the one that resets first.
-
-Once it has moved to an account, it keeps using that week until the reset, even after more than half of it is used. If that account's 5-hour limit fills up and the normal auto-switch moves away, it comes back once the 5-hour window resets. Switching by hand ends this.
-
-After any automatic switch, from either toggle, the top of the menu says why for 12 hours, for example "Auto-switched at 03:12 to use up this account's week before it resets 18:00".
-
-</details>
-
-## How it works
-
-The switcher saves and restores the sign-in of each account, copies the chat list and projects between accounts, and reads usage from `api.anthropic.com`. It backs up Claude's files before every switch and leaves the rest of Claude's settings alone.
-
-<details>
-<summary><b>Which files, and what happens to them</b></summary>
-
-&nbsp;
-
-Claude keeps its sign-in in two places inside its data folder:
-
-| Platform | Data folder |
-| --- | --- |
-| Windows, Microsoft Store app | `%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Roaming\Claude` |
-| Windows, direct download | `%APPDATA%\Claude` |
-| macOS | `~/Library/Application Support/Claude` |
-
-| What | Where | What the switcher does with it |
+| 操作 | 用途 | 执行范围 |
 | --- | --- | --- |
-| Sign-in tokens | `config.json`: `oauth:tokenCacheV2`, `oauth:tokenCache`, `lastKnownAccountUuid` | Saves and restores these three entries, leaves every other entry untouched |
-| Web session | `Network/Cookies` | Saves and restores the file while Claude is closed |
-| Chat list | `claude-code-sessions/<account>/<organization>/local_<id>.json` | Copies missing entries in, refreshes older ones, never deletes |
-| Deleted chats | `deleted_<id>` next to the entries | Reads them, so a deleted chat is never copied back |
-| Projects | `local-agent-mode-sessions/<account>/<organization>/spaces.json` | Adds missing projects, refreshes older ones, never deletes. Leaves out the claude.ai project link of the other organization, and a project you deleted in an account is not copied back |
-| Conversations | `~/.claude/projects` | Nothing. They are shared by all accounts already |
+| 重新识别账号 | 登录或授权完成后，更新邮箱、名称和套餐 | 当前账号身份；操作本身不重启 Claude |
+| 刷新额度 | 更新5小时和每周已用比例 | 当前账号额度；操作本身不切号或重启 Claude |
+| 自动额度检查 | 保持缓存更新 | 当前账号通常每15分钟，其他账号每30分钟 |
 
-Before each switch, `config.json` and the cookie store are backed up. The last 10 backups are kept. If any step fails, the backup goes back and the error shows at the top of the menu.
+两种手动刷新都可跳过普通自动检查间隔，各自有15秒防重复间隔。身份刷新不会推迟额度检查。
 
-**Usage.** The saved token cache is decrypted in memory with Claude's own key (DPAPI on Windows, the keychain on macOS). The switcher then asks `api.anthropic.com` for each account's profile and usage, the same endpoints Claude and Claude Code use themselves. The active account is checked every two minutes, every minute from 85%, the others every ten. That endpoint is rate-limited per account and Claude polls it too, so after a `429` the switcher waits as long as the server asks, or backs off up to 30 minutes, and keeps showing the last numbers meanwhile. Claude's tokens last about a month, so a saved account keeps showing live usage without being signed in.
+真实限流仍需等待：收到 HTTP 429 后至少暂停30分钟，连续发生时延长至60、120分钟；服务器指定更长时间时，按服务器时间等待。等待状态会保存在本地，重启不会清除。并发检查不会排队重复发送。
 
-**Updates.** Once a day the switcher asks GitHub for the version number of the latest release. Nothing about you or your accounts goes along. When a newer version is out, the top of the menu says so, and a click opens the download page. With winget, `winget upgrade SnlperStripes.ClaudeAccountSwitcher` does the same. To never contact GitHub, quit the switcher, add `"noUpdateCheck": true` to `state.json` and start it again.
+界面显示缓存的**已用比例**。没有缓存时显示“待检查”，不按0处理。更新时间可在“管理”中查看，重置时间可悬停查看。
 
-**The Store app quirk.** Programs started from inside the Store version of Claude, a Claude Code terminal for example, see a redirected AppData folder. The switcher notices when it was started that way and starts itself again through Explorer, so it sees the real files and survives Claude quitting.
+## 常见问题
 
-</details>
-
-## Your data
-
-| | |
+| 现象 | 处理方式 |
 | --- | --- |
-| Saved sign-ins, state, backups, log | `~/.claude-account-switcher` (`%USERPROFILE%\.claude-account-switcher` on Windows), **Open data folder** in the menu |
-| Tokens | Stored exactly as Claude encrypted them. Never written in plain text, never sent anywhere but `api.anthropic.com` |
-| Network | `api.anthropic.com` for profiles and usage. `api.github.com` once a day for the latest version number, off with `"noUpdateCheck": true` in `state.json` |
-| Remove an account | Quit the switcher, delete its folder under `accounts/` and its entry in `state.json` |
-| Uninstall | Turn off **Start at login**, quit, delete the binary and the data folder |
+| Claude 已登录，但提示没有 Code 授权 | 在桌面客户端打开 Code 页面并完成首次授权，然后点击“重新识别账号”。普通聊天登录与 Code 授权是两个状态。 |
+| 套餐已识别，额度仍为“待检查” | 点击“刷新额度”。重新识别账号只查询身份。 |
+| 按钮暂时不可用 | 查看是否正在执行操作、处于15秒防重复间隔，或仍在服务器限流等待中。 |
+| 提示检查结果未能完整保存 | 检查本地配置目录的写入权限和磁盘空间。保留原文件以便排查；不要反复删除状态或登录快照来绕过暂停。对外报告时仅提供脱敏信息。 |
+| Chrome 资料列表为空 | 先打开官方 Chrome 并创建个人资料，再重新打开添加窗口。 |
+| 提示管理器已在运行 | 从托盘打开已有窗口；替换版本前先退出旧管理器。 |
 
-## Command line
+## 本地数据与安全
 
+程序沿用 `%USERPROFILE%\.claude-account-switcher` 保存管理器数据：
+
+| 内容 | 用途 |
+| --- | --- |
+| `state.json` | 账号元数据、额度缓存、检查时间和限流状态 |
+| `ui-settings.json` | Chrome 绑定和待核对的目标邮箱 |
+| `accounts/`、`backups/` | 登录快照与操作前备份，按敏感文件保管 |
+| `switcher.log` | 运行诊断；分享前检查并移除邮箱、路径等个人信息 |
+
+Claude 的会话正文和项目文件继续保留在原位置。Chrome 发现只读取个人资料的目录、名称和邮箱元数据；账号切换使用的是 Claude 桌面客户端的登录快照。
+
+**不要把整个数据目录、登录快照、Cookie、令牌或原始配置提交到 GitHub，也不要放进公开 Issue。** 漏洞请通过 [私密安全报告](https://github.com/kkx9578/claude-account-workbench/security/advisories/new) 提交，详见 [SECURITY.md](SECURITY.md)。
+
+## 从源码构建
+
+在 Windows x64 上使用经验证的 **Go 1.26.9**：
+
+```powershell
+git clone https://github.com/kkx9578/claude-account-workbench.git
+cd claude-account-workbench
+go vet ./...
+go test -count=1 ./...
+go build -tags production -trimpath -ldflags "-H=windowsgui -s -w" -o claude-account-workbench-windows-amd64.exe .
 ```
-claude-account-switcher -status
-```
 
-Prints every saved account with its usage and exits.
+运行构建结果仍需要系统 WebView2 Runtime。`production` 标签用于正式构建。默认账号流程回归测试使用虚构账号、临时目录和模拟HTTP响应；部分依赖本机环境的检查可能跳过。
 
-## Build
+贡献流程和验证要求见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-Go 1.26 or newer.
+## 来源与版本
 
-```bash
-go test ./...
-go build -ldflags "-H=windowsgui -s -w" -o claude-account-switcher.exe .   # Windows
-CGO_ENABLED=1 go build -o claude-account-switcher .                        # macOS
-```
+本项目基于 [SnlperStripes/claude-account-switcher v0.3.1](https://github.com/SnlperStripes/claude-account-switcher/releases/tag/v0.3.1)，保留其账号快照与本地 Code 会话同步基础，并增加中文主窗口、Chrome绑定、登录核对、手动身份／额度刷新及持久化节流保护。
 
-One dependency beyond the standard library: [`fyne.io/systray`](https://github.com/fyne-io/systray) for the tray icon, plus `golang.org/x/sys` on Windows.
+首次公开版本为 **v0.1.0**，功能对应此前的本地简洁版2.2；公开仓库使用独立版本号。该版本不宣称已合并上游 v0.3.2 及之后的全部兼容修复。Claude 后续更改本地存储格式或接口时，可能需要新的适配。
 
-## FAQ
-
-**Can the Claude desktop app be signed in to two accounts at once?**
-Not on its own. The app holds one sign-in at a time, and switching means signing out and waiting for an email code. The switcher keeps a saved sign-in for every account and swaps between them in about ten seconds.
-
-**How do I switch Claude accounts without signing out?**
-Install the switcher, add each account once with **Add account…**, then pick an account from the tray menu. You never use Sign out again.
-
-**What happens to my Claude Code chats when I switch accounts?**
-They come along. The switcher copies the chat list and projects of your other accounts into the one you switch to, so the chat you were in shows up in the sidebar and you can keep going.
-
-**How do I see the usage of all my Claude accounts at once?**
-The tray menu shows 5-hour and weekly usage of every saved account, live, with when each limit resets. `claude-account-switcher -status` prints the same in a terminal.
-
-**What can I do when I hit the Claude usage limit?**
-Switch to an account that has room left, or let **Auto-switch** do it for you shortly before the limit.
-
-**Does it work with the Microsoft Store version of Claude?**
-Yes. It finds the Store app's real data folder and works with the direct download too. Windows 10 and 11.
-
-**Does it work on macOS?**
-It builds for macOS (universal) in CI, but nobody has tested it on a real Mac yet. A [test report](https://github.com/SnlperStripes/claude-account-switcher/issues/new?template=macos_report.yml) helps.
-
-**Does it switch the Claude Code CLI in the terminal?**
-No. This switches the Claude desktop app, including the Claude Code chats inside it. The `claude` command in a terminal keeps its own sign-in, and the switcher does not touch it.
-
-**Do my sign-ins leave my machine?**
-No. Tokens stay encrypted exactly as Claude stored them, and the only server they ever go to is `api.anthropic.com`. The only other request is a daily check on GitHub for a new version, which sends nothing about you and can be turned off, see [How it works](#how-it-works).
-
-**How do I update?**
-The menu says so when a new version is out; click it for the download page and replace the file. With winget, run `winget upgrade SnlperStripes.ClaudeAccountSwitcher`. Your accounts and settings stay in the data folder.
-
-## Caveats
-
-This relies on how the Claude desktop app stores its files today, not on a published interface. An app update can change that. When it does, the switcher fails loudly, restores its backup and says so in the menu. It does not guess.
-
-## Contributing
-
-Bug reports, ideas and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md).
-Got a Mac? A [macOS test report](https://github.com/SnlperStripes/claude-account-switcher/issues/new?template=macos_report.yml) helps a lot, even if everything just worked.
-Found a security problem? Please report it privately, see [SECURITY.md](SECURITY.md).
-If the switcher saves you time, a star helps other people with more than one account find it.
-
-## License
-
-[Apache 2.0](LICENSE). Use it, change it, ship it, sell it.
-
-**Keep the credit.** If you pass this on, changed or not, include the [`NOTICE`](NOTICE) file, which names the author and links back here, and say what you changed.
+许可证为 **Apache-2.0**。上游署名与修改说明见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)，依赖许可证见 [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES/README.md)。本项目与 Anthropic 无隶属关系。

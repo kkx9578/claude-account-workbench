@@ -1,3 +1,4 @@
+// Modified 2026-10-19: Simplified Chinese user-facing text and date display.
 package main
 
 import (
@@ -28,30 +29,44 @@ type tray struct {
 	autostart  *systray.MenuItem
 	lastIcon   string
 	updates    chan struct{}
+	openWindow func()
+	exitApp    func()
+	onAdd      func()
+	onSwitch   func(string)
+	onSync     func()
 }
 
 func (t *tray) onReady() {
-	systray.SetTooltip("Claude Account Switcher")
+	systray.SetTooltip("Claude 账号切换器（中文版）")
 	t.setIcon(-1, defaultThreshold)
+	if t.openWindow != nil {
+		open := systray.AddMenuItem("打开账号工作台", "显示账号、额度和 Chrome 绑定")
+		go func() {
+			for range open.ClickedCh {
+				t.openWindow()
+			}
+		}()
+		systray.AddSeparator()
+	}
 
 	t.status = systray.AddMenuItem("", "")
 	t.status.Disable()
 	t.status.Hide()
-	t.update = systray.AddMenuItem("", "Open the download page")
+	t.update = systray.AddMenuItem("", "打开本项目的发布页面")
 	t.update.Hide()
 	for i := range t.accounts {
-		t.accounts[i] = systray.AddMenuItemCheckbox("", "Switch the Claude app to this account", false)
+		t.accounts[i] = systray.AddMenuItemCheckbox("", "将 Claude 切换到此账号", false)
 		t.accounts[i].Hide()
 	}
 	systray.AddSeparator()
-	t.auto = systray.AddMenuItemCheckbox("Auto-switch when nearly full", "Switch to the account with the most room left", false)
-	limit := systray.AddMenuItem("Auto-switch at", "")
+	t.auto = systray.AddMenuItemCheckbox("用量接近上限时自动切号", "切换到剩余额度最多的账号", false)
+	limit := systray.AddMenuItem("自动切号阈值（已用）", "")
 	for _, v := range thresholds {
 		t.thresholds = append(t.thresholds, limit.AddSubMenuItemCheckbox(fmt.Sprintf("%.0f%%", v), "", false))
 	}
-	t.spend = systray.AddMenuItemCheckbox("Auto-switch to use up expiring weekly", "Switch to an account whose weekly limit resets within a day with half or more of it unused", false)
-	t.add = systray.AddMenuItem("Add account…", "Restart Claude on its sign-in screen, your current account is kept")
-	t.importNow = systray.AddMenuItem("Import chats from all accounts", "Restart Claude so every chat shows up in this account")
+	t.spend = systray.AddMenuItemCheckbox("周额度重置前自动切号", "切换到一天内重置且至少剩余一半周额度的账号", false)
+	t.add = systray.AddMenuItem("添加账号…", "保存当前账号的登录状态，重启 Claude 后登录另一个账号")
+	t.importNow = systray.AddMenuItem("同步所有账号的 Code 聊天", "同步本机 Code 聊天列表并重启 Claude，让当前账号也能打开原聊天")
 	systray.AddSeparator()
 	// Rewriting an enabled entry keeps its path current and adds the Task
 	// Manager record that entries from before v0.1.2 are missing.
@@ -60,16 +75,20 @@ func (t *tray) onReady() {
 			log.Printf("refresh start at login: %v", err)
 		}
 	}
-	t.autostart = systray.AddMenuItemCheckbox("Start at login", "", autostartEnabled())
-	folder := systray.AddMenuItem("Open data folder", "")
-	quit := systray.AddMenuItem("Quit", "")
+	t.autostart = systray.AddMenuItemCheckbox("开机自动启动", "", autostartEnabled())
+	folder := systray.AddMenuItem("打开配置与备份文件夹", "")
+	quit := systray.AddMenuItem("退出切换器", "")
 
 	for i, item := range t.accounts {
 		go func() {
 			for range item.ClickedCh {
 				snap := t.s.snapshot()
 				if i < len(snap.Accounts) && snap.Accounts[i].UUID != snap.Active {
-					go t.s.run("Switch", func() error { return t.s.switchTo(snap.Accounts[i].UUID, byHand) })
+					if t.onSwitch != nil {
+						t.onSwitch(snap.Accounts[i].UUID)
+					} else {
+						go t.s.run("切换账号", func() error { return t.s.switchTo(snap.Accounts[i].UUID, byHand) })
+					}
 				}
 				t.s.onChange()
 			}
@@ -90,12 +109,20 @@ func (t *tray) onReady() {
 			case <-t.spend.ClickedCh:
 				t.s.setSpendWeekly(!t.spend.Checked())
 			case <-t.add.ClickedCh:
-				go t.s.run("Add account", t.s.addAccount)
+				if t.onAdd != nil {
+					t.onAdd()
+				} else {
+					go t.s.run("添加账号", t.s.addAccount)
+				}
 			case <-t.importNow.ClickedCh:
-				go t.s.run("Import", t.s.importChats)
+				if t.onSync != nil {
+					t.onSync()
+				} else {
+					go t.s.run("同步聊天", t.s.importChats)
+				}
 			case <-t.autostart.ClickedCh:
 				if err := setAutostart(!t.autostart.Checked()); err != nil {
-					t.s.setStatus("Start at login: " + err.Error())
+					t.s.setStatus("设置开机启动失败：" + err.Error())
 				}
 				setChecked(t.autostart, autostartEnabled())
 			case <-t.update.ClickedCh:
@@ -103,7 +130,11 @@ func (t *tray) onReady() {
 			case <-folder.ClickedCh:
 				shellOpen(t.s.dir)
 			case <-quit.ClickedCh:
-				systray.Quit()
+				if t.exitApp != nil {
+					t.exitApp()
+				} else {
+					systray.Quit()
+				}
 			}
 		}
 	}()
@@ -165,18 +196,18 @@ func (t *tray) render() {
 		t.status.Hide()
 	}
 	if snap.Update != "" {
-		t.update.SetTitle("Version " + snap.Update + " is out, click to download")
+		t.update.SetTitle("发现更新 " + snap.Update + "，点击查看发布页")
 		t.update.Show()
 	} else {
 		t.update.Hide()
 	}
 	if len(snap.Accounts) == 0 && snap.Status == "" {
-		t.status.SetTitle("Open Claude and sign in")
+		t.status.SetTitle("请打开 Claude 并登录账号")
 		t.status.Show()
 	}
 
 	activePct := -1.0
-	tip := "Claude Account Switcher"
+	tip := "Claude 账号切换器（中文版）"
 	for i, item := range t.accounts {
 		if i >= len(snap.Accounts) {
 			item.Hide()
@@ -225,34 +256,36 @@ func usageText(a Account, threshold float64, now time.Time) string {
 		return a.Problem
 	}
 	if a.Usage == nil {
-		return "usage unknown"
+		return "用量暂不可用"
 	}
 	u := a.Usage.current(now)
-	parts := []string{fmt.Sprintf("5h %.0f%%", u.Session), fmt.Sprintf("week %.0f%%", u.Weekly)}
+	parts := []string{fmt.Sprintf("5 小时已用 %.0f%%", u.Session), fmt.Sprintf("本周已用 %.0f%%", u.Weekly)}
 	if u.Session >= threshold && !u.SessionReset.IsZero() {
-		parts[0] += " until " + resetText(u.SessionReset, now)
+		parts[0] += "，重置于 " + resetText(u.SessionReset, now)
 	}
 	// The weekly reset is always shown: it decides how much of the week is left to use.
 	switch {
 	case u.WeeklyReset.IsZero() || !u.WeeklyReset.After(now):
 	case u.Weekly >= threshold:
-		parts[1] += " until " + resetText(u.WeeklyReset, now)
+		parts[1] += "，重置于 " + resetText(u.WeeklyReset, now)
 	default:
-		parts[1] += ", resets " + resetText(u.WeeklyReset, now)
+		parts[1] += "，重置于 " + resetText(u.WeeklyReset, now)
 	}
 	return strings.Join(parts, " · ")
 }
 
 func resetText(at, now time.Time) string {
 	at, now = at.Local(), now.Local()
+	weekdays := [...]string{"周日", "周一", "周二", "周三", "周四", "周五", "周六"}
+	weekday := weekdays[at.Weekday()]
 	switch {
 	case at.YearDay() == now.YearDay() && at.Year() == now.Year():
 		return at.Format("15:04")
 	case at.Sub(now) < 6*24*time.Hour:
-		return at.Format("Mon 15:04")
+		return weekday + at.Format(" 15:04")
 	}
 	// A weekday alone would read as today for a reset a week out.
-	return at.Format("Mon 2 Jan 15:04")
+	return at.Format("1月2日 ") + weekday + at.Format(" 15:04")
 }
 
 func (t *tray) setIcon(pct, threshold float64) {

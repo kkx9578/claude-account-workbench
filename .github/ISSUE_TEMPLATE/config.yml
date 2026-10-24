@@ -1,8 +1,5 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
-  - name: Question or idea to discuss
-    url: https://github.com/SnlperStripes/claude-account-switcher/discussions
-    about: Ask how something works or share how you use it.
-  - name: Security problem
-    url: https://github.com/SnlperStripes/claude-account-switcher/security/advisories/new
-    about: Report it privately, not in a public issue.
+  - name: Private security report
+    url: https://github.com/kkx9578/claude-account-workbench/security/advisories/new
+    about: Report vulnerabilities privately; never post credentials in public issues.

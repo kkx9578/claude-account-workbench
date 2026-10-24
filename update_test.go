@@ -4,9 +4,19 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 	"time"
 )
+
+func TestUpstreamUpdateCacheIsNotShownAsWorkbenchRelease(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "state.json"), `{"latestVersion":"99.0.0","updateChecked":"2026-10-24T00:00:00Z","updateSource":"https://github.com/SnlperStripes/claude-account-switcher"}`)
+	s := newSwitcher(dir)
+	if s.st.LatestVersion != "" || !s.st.UpdateChecked.IsZero() {
+		t.Fatal("upstream update cache retained for a different project")
+	}
+}
 
 func TestNewerVersion(t *testing.T) {
 	for _, c := range []struct {

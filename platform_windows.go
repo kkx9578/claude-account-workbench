@@ -1,3 +1,4 @@
+// Modified 2026-10-19: Simplified Chinese user-facing text and date display.
 package main
 
 import (
@@ -140,7 +141,7 @@ func quitDesktop() error {
 		log.Printf("Claude did not close on request, ended it after %s", time.Since(began).Round(100*time.Millisecond))
 		return nil
 	}
-	return errors.New("Claude did not quit")
+	return errors.New("Claude 尚未完全退出，请从 Claude 托盘菜单退出后重试")
 }
 
 func pidArgs(pids []uint32) []string {
@@ -187,7 +188,7 @@ func startDesktop(exe string) error {
 	if id := strings.TrimSpace(out); err == nil && id != "" {
 		return start("explorer.exe", `shell:AppsFolder\`+id)
 	}
-	return errors.New("could not find the Claude app")
+	return errors.New("未找到 Claude 桌面应用，请先安装并打开一次 Claude")
 }
 
 // storeAppID derives "Claude_<publisher>!Claude" from a path like
